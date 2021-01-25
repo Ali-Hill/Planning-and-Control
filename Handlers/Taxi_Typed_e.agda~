@@ -1,0 +1,110 @@
+open import Relation.Binary
+open import Relation.Binary.PropositionalEquality
+open import Data.List hiding (any)
+open import Relation.Nullary
+open import Data.List.Membership.Propositional
+open import Data.List.Relation.Unary.Any
+open import Data.Empty
+open import Data.Product
+open import Data.Sum
+
+
+
+open import Handlers.Taxi_Domain_Types
+open import Agda.Builtin.Nat
+open import Data.List
+
+module Handlers.Taxi_Typed   {numberOfTrips : C taxi -> Nat}
+                             {maxTrips : C taxi -> Nat}  where
+  
+
+open import Grammar_Types {Action} {R} {Type} {C} renaming (NPred to State) hiding (¬_)
+--open import Membership_And_State {Action} {R} {C} {isDecidable} {isDEC} {isDECA}
+--open import Action_Handler {Action} {R} {C} {isDecidable} {isDEC} {isDECA}
+
+--open IsDecEquivalence isDecidable
+
+----------------------------------------------------------------------------------------
+
+open import Data.Nat hiding (_≟_)
+open import Relation.Nullary
+open import Data.Maybe
+
+-- Simplest attempt. My worry here is that we have been passed this function numberOfTrips which
+-- works fine for a singular taxi but when we would evaluate this in an evaluation function we
+-- will lose the fact that this taxi has done an extra trip. We could assume that the oracle
+-- auto updates but I will show some sample fixes late in the file.
+
+ActionHandler : Set
+ActionHandler = Action -> {txi : C taxi} -> {suc (numberOfTrips txi) ≤ maxTrips txi} -> World -> World
+
+open IsDecEquivalence isDecidable renaming (_≟_ to _≟ᵣ_)
+
+remove : R → World → World
+remove x [] = []
+remove x (y ∷ w) with x ≟ᵣ y
+remove x (y ∷ w) | yes p = remove x w
+remove x (y ∷ w) | no ¬p = y ∷ remove x w
+
+-- World constructor from state
+σα : State → World → World
+σα [] w = w
+σα ((+ , x) ∷ N) w = x ∷ σα N w
+σα ((- , x) ∷ N) w = remove x (σα N w)
+
+-- Canonical Handler
+canonical-σ : Γ → ActionHandler
+canonical-σ Γ α = σα (proj₂ (Γ α))
+
+
+⟦_⟧ : Plan → ActionHandler → World → Maybe World
+⟦ doAct (drivePassenger txi x₁ x₂ x₃) f ⟧ σ w with suc (numberOfTrips txi) ≤?  maxTrips txi
+... | no ¬p = nothing
+... | yes p = ⟦ f ⟧ σ (σ ((drivePassenger txi x₁ x₂ x₃)) {txi} {p} w)
+⟦ doAct (drive txi x₁ x₂) f ⟧ σ w  with suc (numberOfTrips txi) ≤?  maxTrips txi
+... | no ¬p = nothing
+... | yes p = ⟦ f ⟧ σ (σ (drive txi x₁ x₂) {txi} {p} w)
+⟦ halt ⟧ σ w = just w
+--------------------------------------------------------------------------------------------------------------
+
+-- Allowing for the update of functions
+
+open IsDecEquivalence (isDEC taxi) 
+
+
+ActionHandler2 : Set
+ActionHandler2 = Action
+                -> {txi : C taxi}
+                -> {noOfTrips : C taxi -> Nat}
+                -> {suc (noOfTrips txi) ≤ maxTrips txi}
+                -> World -> World
+
+
+-- Canonical Handler
+canonical-σ₂ : Γ → ActionHandler2
+canonical-σ₂ Γ α = σα (proj₂ (Γ α))
+
+open import Agda.Builtin.Reflection
+
+updateFunction : C taxi -> Nat -> (C taxi -> Nat) -> (C taxi -> Nat)
+updateFunction txi n noOfTrips t with (t ≟ txi)
+... | no ¬p = noOfTrips t
+... | yes p = n
+
+⟦_⟧₂ : Plan -> ActionHandler2
+            -> (noOfTrips : C taxi -> Nat)
+            -> World
+            -> Maybe World
+⟦ doAct (drivePassenger txi p1 l1 l2) f ⟧₂ σ noOfTrips w with suc (noOfTrips txi) ≤?  maxTrips txi
+... | no ¬p = nothing
+... | yes p = ⟦ f ⟧₂ σ
+                     (updateFunction txi ((suc (noOfTrips txi))) noOfTrips)
+                     (σ ((drivePassenger txi p1 l1 l2)) {txi} {noOfTrips} {p} w)
+⟦ doAct (drive txi l1 l2) f ⟧₂ σ noOfTrips w with suc (noOfTrips txi) ≤?  maxTrips txi
+... | no ¬p = nothing
+... | yes p = ⟦ f ⟧₂ σ
+                     (updateFunction txi ((suc (noOfTrips txi))) noOfTrips)
+                     (σ ((drive txi l1 l2)) {txi} {noOfTrips} {p} w)
+⟦ halt ⟧₂ σ noOfTrips w = just w
+
+--------------------------------------------------------------------------------------------------------------

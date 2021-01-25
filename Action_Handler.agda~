@@ -1,0 +1,40 @@
+open import Relation.Binary
+open import Relation.Binary.PropositionalEquality
+open import Data.Product
+open import Data.List hiding (any)
+open import Relation.Nullary
+open import AnyLemma
+
+module Action_Handler {Action : Set} {R : Set} {C : Set} {isDE : IsDecEquivalence {A = R} (_≡_) }
+                                              {isDEC : IsDecEquivalence {A = C} (_≡_) }
+                                              {isDECA : IsDecEquivalence {A = Action} (_≡_) }  where
+
+
+open import Grammar {Action} {R} {C} 
+open import Membership_And_State {Action} {R} {C} {isDE} {isDEC} {isDECA}
+open import Subtyping {PredMap} {isSame} hiding (State)
+                                              
+-- Action Handler
+ActionHandler : Set
+ActionHandler = Action → World → World/
+
+-- Evalutation function
+⟦_⟧ : Plan → ActionHandler → World → World
+⟦ doAct α f ⟧ σ w = ⟦ f ⟧ σ (σ α w)
+⟦ halt ⟧ σ w = w
+
+-- Well formed handler
+
+{-
+  If we have an action α in gamma
+  And has preconditions proj₁ (Γ α) and postconditions proj₂ (Γ α)
+  proj₁ (Γ α) is a subtype of M
+  and M is true in the world w
+  then the application of the action handler σ of action α
+  results in M being overriden by proj₂ (Γ α) in w
+-}
+
+WfHandler : Γ → ActionHandler → Set
+WfHandler Γ σ =
+  ∀{α P} → proj₁ (Γ α) <: P → ∀{w} → w ∈⟨ P ⟩ → σ α w ∈⟨ P ⊔N proj₂ (Γ α) ⟩
+

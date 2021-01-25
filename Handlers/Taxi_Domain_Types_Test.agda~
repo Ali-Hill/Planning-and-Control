@@ -1,0 +1,115 @@
+module Handlers.Taxi_Domain_Types where
+
+open import Relation.Binary.PropositionalEquality
+open import Relation.Binary
+open import Data.List
+open import Data.List.Relation.Unary.Any
+open import Relation.Nullary using (yes; no; Dec)
+open import Level
+open import Tactic.Deriving.Eq
+
+data Type : Set where
+  taxi : Type
+  location : Type
+  person : Type
+-- EqT : Eq T
+unquoteDecl EqT = deriveEq EqT (quote Type)
+
+  
+data C : Type -> Set where
+  taxi1 taxi2 taxi3 : C taxi 
+  person1 person2 person3 : C person
+  location1 location2 location3 : C location
+-- EqC : Eq C
+unquoteDecl EqC = deriveEq EqC (quote C)
+
+data R : Set where
+  isIn : ∀ {t} -> C t → C location → R
+
+data Action : Set where
+  drivePassenger : C taxi → C person → C location → C location → Action
+  drive : C taxi → C location → C location → Action
+-- EqAction : Eq Action
+unquoteDecl EqAction = deriveEq EqAction (quote Action)
+
+open import Mangle using (mangle)
+
+isDECT : IsDecEquivalence {zero} {zero} (_≡_ {A = Type})
+isDECT = record { isEquivalence = record {
+  refl = λ {x} → refl ;
+  sym = λ x → sym x ;
+  trans = trans } ;
+  _≟_ = mangle  }
+
+isDEC : (t : Type) -> IsDecEquivalence {zero} {zero} (_≡_ {A = C t})
+isDEC t = record { isEquivalence = record {
+  refl = λ {x} → refl ;
+  sym = λ x → sym x ;
+  trans = trans } ;
+  _≟_ = mangle  }
+
+open IsDecEquivalence isDECT hiding (refl ; sym ; trans) renaming (_≟_ to _≟ₜ_)
+open import Relation.Nullary
+
+decSingleC : (t : Type) -> (x y : C t) -> Dec (x ≡ y)
+decSingleC t x y = x ≟c y
+  where open IsDecEquivalence (isDEC t) renaming (_≟_ to _≟c_)
+
+
+decidableR : (x y : R) → Dec (x ≡ y)
+decidableR (isIn {t} x x₁) (isIn {t₁} x₂ x₃) with t ≟ₜ t₁
+... | no ¬p = no λ { refl → ¬p refl}
+... | yes refl with decSingleC t x x₂ | decSingleC location x₁ x₃
+... | no ¬p | no ¬p₁ = no (λ { refl → ¬p refl})
+... | no ¬p | yes p = no (λ { refl → ¬p refl})
+... | yes p | no ¬p = no (λ { refl → ¬p refl})
+... | yes refl | yes refl = yes refl
+
+isDecidable : IsDecEquivalence {zero} {zero} (_≡_ {A = R})
+isDecidable = record { isEquivalence = record {
+  refl = λ {x} → refl ;
+  sym = λ x → sym x ;
+  trans = trans } ;
+ _≟_ = decidableR  }
+
+isDECA : IsDecEquivalence {zero} {zero} (_≡_ {A = Action})
+isDECA = record { isEquivalence = record {
+  refl = λ {x} → refl ;
+  sym = λ x → sym x ;
+  trans = trans } ;
+  _≟_ = mangle  }
+
+
+
+
+{- 
+open import Data.Sum
+
+data R : Set where
+  isIn : (C taxi ⊎ C person) → C location → R
+-- EqR : Eq R
+unquoteDecl EqR = deriveEq EqR (quote R)
+-}
+
+
+
+{-
+open import Grammar {Action} {R} {C} renaming (NPred to State)
+
+--open import PCPLogic_no_equality {Action} {R} {C} {isDecidable} {isDEC} {isDECA}
+
+open import Data.Product
+
+{-
+Γ₁ : Γ
+Γ₁ (drive_passenger t1 p1 l1 l2) = (+ , isin t1 l1) ∷ (+ , isin p1 l1) ∷ (+ , location l1) ∷ (+ , location l2) ∷ (+ , taxi t1) ∷ (+ , person p1) ∷ [] , (+ , person p1) ∷ (+ , taxi t1) ∷ (+ , location l2) ∷ (+ , location l1) ∷ (- , isin t1 l1) ∷ (- , isin p1 l1) ∷ (+ , isin t1 l2) ∷ (+ , isin p1 l2) ∷ []
+Γ₁ (drive t1 l1 l2) = (+ , isin t1 l1) ∷ (+ , location l1) ∷ (+ , location l2) ∷ (+ , taxi t1) ∷ [] , (+ , taxi t1) ∷ (+ , location l2) ∷ (+ , location l1) ∷ (- , isin t1 l1) ∷ (+ , isin t1 l2) ∷ []
+-}
+
+Γ₁ : Γ
+Γ₁ (drive x passenger x₁ x₂ x₃) = {!!}
+Γ₁ (drive x x₁ x₂) = {!!}
+
+
+-}
+

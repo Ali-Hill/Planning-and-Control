@@ -1,0 +1,13 @@
+operational design domain constraints autonomous driving
+
+odd 
+
+i.e. don't go down a residential street. 
+
+iso 2626262. Regulator makes you write C++. verilog
+
+iain reich fraunhaffer. synthesizing monitors for operational design domains.
+
+waterloo monitoring checked odd.
+
+the confidence from dependent types is coming from the ability to encode a specification.

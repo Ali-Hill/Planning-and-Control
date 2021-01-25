@@ -1,0 +1,74 @@
+open import Relation.Binary
+open import Relation.Binary.PropositionalEquality
+open import Data.List hiding (any)
+open import Relation.Nullary
+open import Data.List.Membership.Propositional
+open import Data.Unit hiding (_≟_)
+open import Data.List.Relation.Unary.Any
+open import Data.Empty
+open import Data.Product
+open import Data.Sum
+
+open import Handlers.Gender
+
+{- 
+
+Rather than have actions as a blank set we instead pass actions predicates etc 
+in a similar way as we have done gender above. Then we have access to all of the
+predicate and action information. 
+
+-}
+
+module Handlers.Taxi {Action : Set} {R : Set} {C : Set} {isDE : IsDecEquivalence {A = R} (_≡_) }
+                                              {isDEC : IsDecEquivalence {A = C} (_≡_) }
+                                              {isDECA : IsDecEquivalence {A = Action} (_≡_)}
+                                              {TaxiDriver : Set}
+                                              {getGender : TaxiDriver -> Gender}
+                                              where
+
+
+  
+  
+
+open import Grammar {Action} {R} {C} renaming (NPred to State)
+open import Membership_And_State {Action} {R} {C} {isDE} {isDEC} {isDECA}
+open import Action_Handler {Action} {R} {C} {isDE} {isDEC} {isDECA}
+
+open IsDecEquivalence isDE
+
+remove : R → World → World
+remove x [] = []
+remove x (y ∷ w) with x ≟ y
+remove x (y ∷ w) | yes p = remove x w
+remove x (y ∷ w) | no ¬p = y ∷ remove x w
+
+-- World constructor from state
+σα : State → World → World
+σα [] w = w
+σα ((+ , x) ∷ N) w = x ∷ σα N w
+σα ((- , x) ∷ N) w = remove x (σα N w)
+
+-- Canonical Handler
+canonical-σ : Γ → ActionHandler
+canonical-σ Γ α = σα (proj₂ (Γ α)) 
+
+----------------------------------------------------------------------------------------
+
+{- 
+  Suppose there is a call from zone 3 to zone 5 by some time t. So I give it to the planner the plan says pick up person at 9:00 am and I am about to give this job to some taxi driver and I give it to some taxi on my list and I need to check that the driver hasn't travelled a certain amount of miles per day.
+
+  At midnight everyday your allowance renews. Or within the last 3 hours driver must not drive more than a certain amount miles without a break. Estimated length of journey longer than time until break then you cannot give driver journey.
+-}
+
+
+-- So we are assuming we are pulling from some predictive data set here where we can get
+-- some average journey time for each journey.
+
+
+{- 
+ -- Predicates 
+
+-- simple taxi with no rids sharing 
+
+-} 
+
