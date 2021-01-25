@@ -1,5 +1,0 @@
-module Handlers.Gender where
-
-
-data Gender : Set where
-  male female other : Gender
