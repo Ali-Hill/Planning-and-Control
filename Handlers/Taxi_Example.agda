@@ -106,6 +106,15 @@ world-eval-function = from-just (⟦ plan₁ ⟧₂ (canonical-σ₂ Γ₁) numb
 testEqual : world-eval ≡ world-eval-function
 testEqual = refl
 
+----------------------------------------------------------------------------------------
+
+--Also works with handler where driving is agnostic to trips.
+world-eval-function-ag : World
+world-eval-function-ag = from-just (⟦ plan₁ ⟧₃ (canonical-σ₃ Γ₁) numberOfTrips (stateToWorld P))
+
+-- Both of evaluations return the same world 
+testEqual2 : world-eval ≡ world-eval-function-ag
+testEqual2 = refl
 
 ----------------------------------------------------------------------------------------
 -- Here is an example where the function should fail
@@ -122,5 +131,4 @@ world-eval-function-fail = (⟦ plan₁ ⟧₂ (canonical-σ₂ Γ₁) numberOfT
 
 world-eval-function-fail-proof : (⟦ plan₁ ⟧₂ (canonical-σ₂ Γ₁) numberOfTripsFail (stateToWorld P)) ≡ nothing
 world-eval-function-fail-proof = refl 
-
 

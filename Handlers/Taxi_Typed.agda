@@ -115,3 +115,43 @@ updateFunction txi n noOfTrips t with (t ≟ txi)
 
 
 --------------------------------------------------------------------------------------------------------------
+
+open import Data.Empty
+open import Data.Unit hiding (_≤_ ; _≤?_)
+open import Data.Sum
+
+-- This example assumes that drive does not affect the number of trips so has to be modified
+
+-- True if the action does not affect the number of trips taken
+TripAgnostic : Action -> Set
+TripAgnostic (drivePassenger x x₁ x₂ x₃) = ⊥
+TripAgnostic (drive x x₁ x₂) = ⊤
+
+--Here we assume that even if we have reached the max trips we can still do other actions that do not effect trips.
+-- Here we modify handler2 to only require the proof (suc (noOfTrips txi) ≤ maxTrips) if we are using an action that effects
+-- the number of trips.
+ActionHandler3 : Set
+ActionHandler3 = (α : Action) 
+                -> {txi : C taxi}
+                -> {noOfTrips : C taxi -> Nat}
+                -> {suc (noOfTrips txi) ≤ maxTrips txi ⊎ TripAgnostic α} 
+                -> World -> World
+
+
+⟦_⟧₃ : Plan -> ActionHandler3
+            -> (noOfTrips : C taxi -> Nat)
+            -> World
+            -> Maybe World
+⟦ doAct (drivePassenger txi p1 l1 l2) f ⟧₃ σ noOfTrips w with suc (noOfTrips txi) ≤?  maxTrips txi
+... | no ¬p = nothing
+... | yes p = ⟦ f ⟧₃ σ
+                     (updateFunction txi ((suc (noOfTrips txi))) noOfTrips)
+                     (σ ((drivePassenger txi p1 l1 l2)) {txi} {noOfTrips} {inj₁ p} w)
+⟦ doAct (drive txi l1 l2) f ⟧₃ σ noOfTrips w = ⟦ f ⟧₃ σ
+                                                 noOfTrips
+                                                 (σ ((drive txi l1 l2)) {txi} {noOfTrips} {inj₂ tt} w)
+⟦ halt ⟧₃ σ noOfTrips w = just w
+
+-- Canonical Handler
+canonical-σ₃ : Γ → ActionHandler3
+canonical-σ₃ Γ α = σα (proj₂ (Γ α))
