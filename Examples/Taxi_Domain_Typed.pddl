@@ -2,33 +2,38 @@
 ;;
 
 (define (domain taxi)
-  (:requirements :strips) 
-  (:predicates	 (taxi ?taxi1)
-  		 (person ?person1)
-		 (location ?location1)
-		 (isIn ?obj1 ?location1))
-		 
-(:action drive_passenger
-	:parameters
-		(?t1 ?p1 ?l1 ?l2)
-	:precondition
-		(and
-			(isIn ?t1 ?location1)
-			(isIn ?person1 ?location1)
-	:effect
-		(and
-			(not (isIn ?taxi1 ?location1))
-			(not (isIn ?person1 ?location1))
-			(isIn ?taxi1 ?location2)
-			(isIn ?person1 ?location2)))
+  (:requirements :strips :typing)
 
-(:action drive
-	:parameters
-		(?taxi1 ?location1 ?location2)
-	:precondition
-		(and
-			(isIn ?taxi1 ?location1))
-		(and
-			(not (isIn ?taxi1 ?location1))
-			(isIn ?taxi1 ?location2))))			
+   	(:types
+   		taxi
+   		location
+   		person
+    )
 
+	(:predicates	 
+	 (isIn ?obj1 - (either taxi person) ?l1 - location))
+			 
+	(:action drive_passenger
+		:parameters
+			(?t1 - taxi ?p1 - person ?l1 - location ?l2 - location)
+		:precondition
+			(and
+				(isIn ?t1 ?l1)
+				(isIn ?p1 ?l1))
+		:effect
+			(and
+				(not (isIn ?t1 ?l1))
+				(not (isIn ?p1 ?l1))
+				(isIn ?t1 ?l2)
+				(isIn ?p1 ?l2)))
+
+	(:action drive
+		:parameters
+			(?t1 - taxi ?l1 - location ?l2 - location)
+		:precondition
+			(and
+				(isIn ?t1 ?l1))
+		:effect
+			(and
+				(not (isIn ?t1 ?l1))
+				(isIn ?t1 ?l2))))	

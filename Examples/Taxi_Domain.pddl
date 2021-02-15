@@ -40,3 +40,6 @@
 			(not (isIn ?taxi1 ?location1))
 			(isIn ?taxi1 ?location2))))			
 
+
+
+
